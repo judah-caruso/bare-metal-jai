@@ -1,5 +1,5 @@
 // Minimum viable metaprogram.
-// This is required to ensure we compile our version of Runtime_Support and ignore Preload.
+// This is required to ensure we use our version of Runtime_Support.
 #run {
    set_build_options_dc(.{ do_output = false });
 
@@ -41,8 +41,7 @@
    compiler_end_intercept(ws);
 }
 
-// Like main.jai, this metaprogram does not require any modules so we
-// duplicate declarations we require.
+// Like main.jai, this metaprogram does not require any modules so we duplicate the declarations we require.
 
 Workspace :: s64;
 
