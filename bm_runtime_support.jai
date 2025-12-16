@@ -1,5 +1,5 @@
 // Minimum viable Runtime_Support.
-// Contains only the bare minimum code required by the compiler.
+// Contains code the compiler expects to exist.
 
 // Required parameters, can be unused.
 #module_parameters(
@@ -51,13 +51,11 @@ runtime_support_default_logger :: (message: string, data: *void, info: Log_Info)
 }
 
 runtime_support_default_allocator_proc :: (mode: Allocator_Mode, requested_size: s64, old_size: s64, old_memory: *void, allocator_data: *void) -> *void {
-
     if mode == {
         case .ALLOCATE;
             return c_malloc(requested_size.(u64));
         case .RESIZE;
             return c_realloc(old_memory, requested_size.(u64));
-
         case .FREE;
             c_free(old_memory);
     }
@@ -80,27 +78,22 @@ __array_bounds_check_fail :: (index: s64, limit: s64, line_number: s64, filename
 
 __cast_bounds_check_fail :: (pre_value: s64, pre_flags: u32, post_value: s64, post_flags: u32, fatal: u8, line_number: s64, filename: *u8) #no_context {
     c_puts("Cast bounds check failed.");
-
-    if fatal {
-        panic();
-    }
+    if fatal then panic();
 }
 
 __null_pointer_check_fail :: (index: s64, line_number: s64, filename: *u8) #no_context {
-    c_puts("Null pointer check failed");
+    c_puts("Null pointer check failed.");
     panic();
 }
 
 __arithmetic_overflow :: (left: s64, right: s64, type_code: u16, line_number: s64, filename: *u8) #no_context #no_aoc {
     fatal := type_code & 0x8000;
     c_puts("Arithmetic overflow.");
-    if fatal {
-        panic();
-    }
+    if fatal then panic();
 }
 
 __panic_due_to_runtime_call_of_compile_time_procedure :: (line_number: s64, filename: *u8) #no_context {
-    c_puts("Error: Attempt to call a compile-time procedure at runtime.");
+    c_puts("Attempt to call a compile-time procedure at runtime.");
     panic();
 }
 
@@ -110,20 +103,21 @@ panic :: () #no_context {
         compile_time_debug_break :: () #compiler #no_context;
         compile_time_debug_break();
     } else {
-        // Break into the debugger, or stop the running process.
         #if OS == .PS5 {
             #asm { int 0x41; }
         } else #if OS == .OUNCE && CPU == .ARM64 {
-           #bytes .[0x02, 0x80, 0x00, 0x00]; // udf 0x8002: 16 bit instruction (0x00, 16 bit immediate)
+           // udf 0x8002: 16 bit instruction (0x00, 16 bit immediate)
+           #bytes .[0x02, 0x80, 0x00, 0x00];
         } else #if CPU == .X64 {
             #asm { int3; }
         } else #if CPU == .ARM64 {
-            #bytes .[0x20, 0x00, 0b001_0_0000, 0b1101_0100]; // BRK 0x01: 11 bit instruction, 16 bit immediate, 5 bit unused.
+            // BRK 0x01: 11 bit instruction, 16 bit immediate, 5 bit unused.
+            #bytes .[0x20, 0x00, 0b001_0_0000, 0b1101_0100];
         } else #if OS == .WASM {
-            wasm_debug_break :: () #foreign; // You will need to provide this function as JS code in your WASM environment. :JaiWasm:
+            wasm_debug_break :: () #foreign;
             wasm_debug_break();
         } else {
-            llvm_trap :: () #intrinsic "llvm.debugtrap"; // @ToDo: This used to be llvm.trap which supposedly doesn’t work on Android. We need to test if "debugtrap" works there or if we need a different implemenation.
+            llvm_trap :: () #intrinsic "llvm.debugtrap";
             llvm_trap();
         }
     }
