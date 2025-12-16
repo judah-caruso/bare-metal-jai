@@ -41,7 +41,8 @@
    compiler_end_intercept(ws);
 }
 
-// Like main.jai, this metaprogram does not require any modules so we duplicate the declarations we require.
+// Like main.jai, this metaprogram does not require any modules so we duplicate the declarations we need.
+// These types should not be modified.
 
 Workspace :: s64;
 
@@ -153,7 +154,7 @@ Build_Options :: struct {
 X64_Options :: struct {
     use_dlls := false;
     enable_register_allocation := false;
-    enable_unix_runtime_frame_information := true; // If true, we emit the stack frame information in the .eh_frame section (loaded into memory at run-time) instead of .debug_frame (not loaded by default, but used by debuggers).
+    enable_unix_runtime_frame_information := true;
 }
 
 Llvm_Options :: struct {
@@ -175,36 +176,32 @@ Llvm_Options :: struct {
        AGGRESSIVE :: 4;
     };
 
-    // compilation options, identical to switches used by clang/LLVM tools (i.e., -ffunction-sections)
     function_sections: bool = false;
 
-    // optimizations
     enable_tail_calls         := false;
     enable_loop_unrolling     := false;
     enable_slp_vectorization  := false;
     enable_loop_vectorization := false;
 
-    preserve_debug_info       := true;  // Will degrade optimization to some degree, but increase ability to debug. So you can still make an optimized build with debug info.
+    preserve_debug_info       := true;
 
     merge_functions  := false;
-    disable_inlining := true;  // Only controls optimization-style inlining; language-level inlining is controlled in Build_Options.
-    disable_mem2reg  := false; // Currently ignored by the LLVM backend. Unless we find a way to re-enable it, we will delete this flag. (Except the variable is actually being used... is it being used poorly? Elaborate and/or fix.)
+    disable_inlining := true;
+    disable_mem2reg  := false;
 
-    enable_split_modules := true;  // Will degrade inlining ability, so only set this for debug builds. (Increases compile speed).
+    enable_split_modules := true;
 
-    // Outputs to <target obj name>_no_opt(.ll/.bc)
     output_bitcode_before_optimizations := false;
     output_llvm_ir_before_optimizations := false;
 
-    // Outputs to <target obj name>(.ll/.bc)
     output_bitcode := false;
     output_llvm_ir := false;
 
     target_system_triple:   string;
-    target_system_cpu:      string;  // If non-empty, gets passed as the CPU argument to createTargetMachine.
-    target_system_features: string;  // If non-empty, gets passed as the Features argument to createTargetMachine.
+    target_system_cpu:      string;
+    target_system_features: string;
 
-    command_line:           [] string;  // Used to pass misc other options to llvm. The first argument is the executable name (because of course... sigh). Arguments after that actually affect the state used by llvm.
+    command_line: []string;
 }
 
 Build_Options_During_Compile :: struct {
@@ -239,9 +236,9 @@ Message_Failed_Import :: struct {
     #as using m : Message;
 
     status: enum u8 {
-        UNINITIALIZED   :: 0;
-        BLOCKED         :: 1;
-        NOT_FOUND       :: 2;
+        UNINITIALIZED :: 0;
+        BLOCKED       :: 1;
+        NOT_FOUND     :: 2;
     };
 
     host_module_name:       string;
@@ -263,10 +260,10 @@ Intercept_Flags :: enum_flags u32 {
 }
 
 Provided_Import_Type :: enum u8 {
-    SHORT_NAME        :: 0;  // An alternative import name, which gets searched through all the paths, etc, like "Basic" in #import "Basic". If you wrote a file into the import folder using this name, you could submit a SHORT_NAME that is the same as the one that was originally tried, and the compiler will retry it.
-    PATH_TO_FILE      :: 1;     // A filename, which just gets loaded directly, with no searching around.
-    PATH_TO_DIRECTORY :: 2;  // A folder name, which just gets loaded directly, with no searching around.
-    FULL_TEXT         :: 3;  // To provide the text of the replacement module, with no file operations performed.
+    SHORT_NAME        :: 0;
+    PATH_TO_FILE      :: 1;
+    PATH_TO_DIRECTORY :: 2;
+    FULL_TEXT         :: 3;
 }
 
 set_build_options_dc       :: (options: Build_Options_During_Compile, w: Workspace = -1) #compiler;
