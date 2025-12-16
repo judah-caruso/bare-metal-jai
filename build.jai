@@ -18,7 +18,7 @@
 
    // This is actually loaded relative to the compiler executable, so blocking/replacing it
    // import will not do anything. To *actually* replace Preload, a 'modules' directory needs to
-   // exist two levels above the executable; that directory should contain minimal Preload.jai file.
+   // exist one level above the executable; that directory should contain minimal Preload.jai file.
    remap_import(ws, "*", "Preload", "");
 
    compiler_begin_intercept(ws, .SKIP_ALL);
